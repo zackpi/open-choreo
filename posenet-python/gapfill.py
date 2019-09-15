@@ -82,25 +82,26 @@ def main():
                 output_stride=output_stride,
                 max_pose_detections=10,
                 min_pose_score=0.25)
-
             keypoint_coords *= output_scale
+
 
             # smoothing function
             past_coords.append(keypoint_coords[0])
-            past_coords = past_coords[1:]
             past_scores.append(keypoint_scores[0])
-            past_scores = past_scores[1:]
+            if len(past_coords) == MEMORY:
+                past_coords = past_coords[1:]
+                past_scores = past_scores[1:]
 
-            smoothed_scores, smoothed_coords = apply_smoothing(past_scores, past_coords, keypoint_scores[0], keypoint_coords[0])
-            keypoint_scores[0] = smoothed_scores
-            keypoint_coords[0] = smoothed_coords
+                smoothed_scores, smoothed_coords = apply_smoothing(past_scores, past_coords, keypoint_scores[0], keypoint_coords[0])
+                keypoint_scores[0] = smoothed_scores
+                keypoint_coords[0] = smoothed_coords
 
             if args.output_dir:
                 draw_image = posenet.draw_skel_and_kp(
                     draw_image, pose_scores, keypoint_scores, keypoint_coords,
                     min_pose_score=0.25, min_part_score=0)
-#                cv2.imshow("out", draw_image)
-#                cv2.waitKey(1)
+                cv2.imshow("out", draw_image)
+                cv2.waitKey(1)
                 cv2.imwrite(os.path.join(args.output_dir, os.path.relpath(f, args.image_dir)), draw_image)
 
             data = dict()
