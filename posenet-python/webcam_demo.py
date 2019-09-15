@@ -2,8 +2,9 @@ import tensorflow as tf
 import cv2
 import time
 import argparse
-
+from websocket import *
 import posenet
+import base64
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=int, default=101)
@@ -13,7 +14,7 @@ parser.add_argument('--cam_height', type=int, default=720)
 parser.add_argument('--scale_factor', type=float, default=0.7125)
 parser.add_argument('--file', type=str, default=None, help="Optionally use a video file instead of a live camera")
 args = parser.parse_args()
-
+ws = create_connection("ws://66.31.16.203:5000")
 
 def main():
     with tf.Session() as sess:
@@ -60,11 +61,22 @@ def main():
 
             cv2.imshow('posenet', overlay_image)
             frame_count += 1
+            # this saves the image file
             cv2.imwrite(filename='saved_images/img' + str(frame_count) + '.jpg', img=cap.read()[1])
+            
+            with open('saved_images/img' + str(frame_count) + '.jpg', "rb") as f:
+                data = f.read()
+
+            binary_image = base64.encodestring(data)
+            ws.send(binary_image)
+            # not sure if this should be here, cuz lag...
+            # result =  ws.recv() 
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
         print('Average FPS: ', frame_count / (time.time() - start))
+        ws.close()
 
 
 if __name__ == "__main__":
