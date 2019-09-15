@@ -6,6 +6,8 @@ import os
 
 import posenet
 
+MEMORY = 2
+t_coeffs = [0.5**(MEMORY - m - (m == 0)) for m in range(MEMORY)]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=int, default=101)
@@ -16,51 +18,34 @@ parser.add_argument('--output_dir', type=str, default='./output')
 args = parser.parse_args()
 
 
-# def apply_smoothing(prev_scores, prev_coords, curr_scores, curr_coords):
-#     out_scores = []
-#     out_coords = []
-
-#     for i in range(17):     # num key points
-#         prev_score = prev_scores[i]
-#         prev_coord = prev_coords[i]
-#         curr_score = curr_scores[i]
-#         curr_coord = curr_coords[i]
-
-#         inv_score_sum = 1 / (prev_score + curr_score)
-#         out_score = prev_score * 0.25 + curr_score * 0.75
-#         out_coord = [prev_coord[0] + prev_coord[0] * prev_score * inv_score_sum + curr_coord[0] * curr_score * inv_score_sum,
-#             prev_coord[1] + prev_coord[1] * prev_score * inv_score_sum + curr_coord[1] * curr_score * inv_score_sum]
-
-#         out_scores.append(out_score)
-#         out_coords.append(out_coord)
-#     return out_scores, out_coords
-
-
 def apply_smoothing(prev_scores, prev_coords, curr_scores, curr_coords):
     out_scores = []
     out_coords = []
 
     for i in range(17):     # num key points
-        prev_score = prev_scores[i]
-        prev_coord = prev_coords[i]
-        curr_score = curr_scores[i]
-        curr_coord = curr_coords[i]
+        mem_scores = [mem_score[i] for mem_score in prev_scores]
+        mem_coords = [mem_coord[i] for mem_coord in prev_coords]
 
-        inv_score_sum = 1 / (prev_score + curr_score)
-        out_score = prev_score * 0.25 + curr_score * 0.75
-        out_coord = [prev_coord[0] + prev_coord[0] * prev_score * inv_score_sum + curr_coord[0] * curr_score * inv_score_sum,
-            prev_coord[1] + prev_coord[1] * prev_score * inv_score_sum + curr_coord[1] * curr_score * inv_score_sum]
+        score_sum = sum(mem_scores)
+        inv_score_sum = 1 / MEMORY if score_sum == 0 else 1 / sum(mem_scores)
+        norm_scores = [score * inv_score_sum for score in mem_scores]
+        out_score = sum([t_coeff * score for t_coeff, score in zip(t_coeffs, mem_scores)])
+
+        com = [sum([mem_coords[m][0] for m in range(MEMORY)]) / MEMORY,
+            sum([mem_coords[m][1] for m in range(MEMORY)]) / MEMORY]
+        out_x = com[0] + sum([t_coeff * norm * (coord[0] - com[0]) for t_coeff, norm, coord in zip(t_coeffs, norm_scores, mem_coords)])
+        out_y = com[1] + sum([t_coeff * norm * (coord[1] - com[1]) for t_coeff, norm, coord in zip(t_coeffs, norm_scores, mem_coords)])
 
         out_scores.append(out_score)
-        out_coords.append(out_coord)
+        out_coords.append([out_x, out_y])
     return out_scores, out_coords
 
 
 
 def main():
 
-    past_coords = [[0, 0] for _ in range(17)]
-    past_scores = [0] * 17
+    past_coords = [[[0, 0] for _ in range(17)] for __ in range(MEMORY)]
+    past_scores = [[0] * 17 for _ in range(MEMORY)]
 
     with tf.Session() as sess:
         model_cfg, model_outputs = posenet.load_model(args.model, sess)
@@ -95,6 +80,11 @@ def main():
             keypoint_coords *= output_scale
 
             # smoothing function
+            past_coords.append(keypoint_coords[0])
+            past_coords = past_coords[1:]
+            past_scores.append(keypoint_scores[0])
+            past_scores = past_scores[1:]
+
             smoothed_scores, smoothed_coords = apply_smoothing(past_scores, past_coords, keypoint_scores[0], keypoint_coords[0])
             keypoint_scores[0] = smoothed_scores
             keypoint_coords[0] = smoothed_coords
