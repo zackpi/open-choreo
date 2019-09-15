@@ -31,6 +31,9 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+bin/
+keypoints/
+pip-selfcheck.json
 MANIFEST
 
 # PyInstaller
