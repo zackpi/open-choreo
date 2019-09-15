@@ -6,6 +6,7 @@ from websocket import *
 import posenet
 import base64
 import numpy as np
+import struct
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=int, default=101)
@@ -39,12 +40,14 @@ def main():
         while True:
             # this saves the image file
             img = cap.read()[1]
-            cv2.imwrite(filename='saved_images/img' + str(frame_count) + '.jpg', img=img)
-            
-            with open('saved_images/img' + str(frame_count) + '.jpg', "rb") as f:
-                data = f.read()
+            retval, data = cv2.imencode('.jpg', img)
 
-            binary_image = base64.encodestring(data)
+            # cv2.imwrite(filename='saved_images/img' + str(frame_count) + '.jpg', img=img)
+            
+            # with open('saved_images/img' + str(frame_count) + '.jpg', "rb") as f:
+            #     data = f.read()
+
+            binary_image = base64.b64encode(data)
             ws.send(binary_image)
             # not sure if this should be here, cuz lag...
             result = ws.recv()
