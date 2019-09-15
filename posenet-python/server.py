@@ -63,7 +63,7 @@ def message_received(client, server, message):
             if pose_scores[pi] == 0.:
                 result = keypoint_coords[:pi]
         print(result[0])        
-        server.send_message_to_all(result)
+        server.send_message_to_all(str(result))
 
 PORT=5000
 HOST="0.0.0.0"
