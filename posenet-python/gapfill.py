@@ -135,7 +135,6 @@ def main():
                 output_stride=output_stride,
                 max_pose_detections=10,
                 min_pose_score=0.25)
-
             keypoint_coords *= output_scale
             bboxes = create_bbox(keypoint_coords, pose_scores)
             if previous_id:
@@ -149,15 +148,17 @@ def main():
             else:
                 current_id,  current_bbox = return_max_area_id(keypoint_coords, pose_scores)
             
-            # smoothing function
-            past_coords.append(keypoint_coords[current_id])
-            past_coords = past_coords[1:]
-            past_scores.append(keypoint_scores[current_id])
-            past_scores = past_scores[1:]
 
-            smoothed_scores, smoothed_coords = apply_smoothing(past_scores, past_coords, keypoint_scores[current_id], keypoint_coords[current_id])
-            keypoint_scores[current_id] = smoothed_scores
-            keypoint_coords[current_id] = smoothed_coords
+            # smoothing function
+            past_coords.append(keypoint_coords[0])
+            past_scores.append(keypoint_scores[0])
+            if len(past_coords) == MEMORY:
+                past_coords = past_coords[1:]
+                past_scores = past_scores[1:]
+
+                smoothed_scores, smoothed_coords = apply_smoothing(past_scores, past_coords, keypoint_scores[0], keypoint_coords[0])
+                keypoint_scores[0] = smoothed_scores
+                keypoint_coords[0] = smoothed_coords
 
             previous_id = current_id
             previous_bbox = current_bbox
@@ -169,6 +170,8 @@ def main():
                 #_ = cv2.rectangle(draw_image, (current_bbox[2], current_bbox[0]), (current_bbox[3], current_bbox[1]), (255, 0, 0), 2)
                 #cv2.imshow("out", draw_image)
                 #cv2.waitKey(1)
+                cv2.imshow("out", draw_image)
+                cv2.waitKey(1)
                 cv2.imwrite(os.path.join(args.output_dir, os.path.relpath(f, args.image_dir)), draw_image)
 
             data = dict()
