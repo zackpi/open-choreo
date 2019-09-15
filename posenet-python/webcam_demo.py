@@ -70,7 +70,8 @@ def main():
             binary_image = base64.encodestring(data)
             ws.send(binary_image)
             # not sure if this should be here, cuz lag...
-            # result =  ws.recv() 
+            result = ws.recv()
+            # print(result)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
