@@ -54,14 +54,14 @@ def main():
             lst = parsed_pts.split()
             final_lst = [float(f) for f in lst]
             keypoints = np.reshape(np.array(final_lst), (17, 2))
-            #cv_keypoints = []
-            #for kc in keypoints:
-            #    cv_keypoints.append(cv2.KeyPoint(kc[1], kc[0], 5. ))
-            #out_img = cv2.drawKeypoints(
-	    #    img, cv_keypoints, outImage=np.array([]), color=(255, 255, 0),
-            #	flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-            #cv2.imshow("out", out_img)
-            #cv2.waitKey(25)
+            cv_keypoints = []
+            for kc in keypoints:
+                cv_keypoints.append(cv2.KeyPoint(kc[1], kc[0], 5. ))
+            out_img = cv2.drawKeypoints(
+	        img, cv_keypoints, outImage=np.array([]), color=(255, 255, 0),
+            	flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            cv2.imshow("out", out_img)
+            cv2.waitKey(25)
             #if cv2.waitKey(1) & 0xFF == ord('q'):
             #    break
 
