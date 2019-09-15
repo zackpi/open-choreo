@@ -15,6 +15,7 @@ parser.add_argument('--scale_factor', type=float, default=0.7125)
 parser.add_argument('--file', type=str, default=None, help="Optionally use a video file instead of a live camera")
 args = parser.parse_args()
 ws = create_connection("ws://66.31.16.203:5000")
+whitelist = set('0123456789 .')
 
 def main():
     with tf.Session() as sess:
@@ -35,34 +36,9 @@ def main():
         start = time.time()
         frame_count = 0
         while True:
-            input_image, display_image, output_scale = posenet.read_cap(
-                cap, scale_factor=args.scale_factor, output_stride=output_stride)
-
-            heatmaps_result, offsets_result, displacement_fwd_result, displacement_bwd_result = sess.run(
-                model_outputs,
-                feed_dict={'image:0': input_image}
-            )
-
-            pose_scores, keypoint_scores, keypoint_coords = posenet.decode_multi.decode_multiple_poses(
-                heatmaps_result.squeeze(axis=0),
-                offsets_result.squeeze(axis=0),
-                displacement_fwd_result.squeeze(axis=0),
-                displacement_bwd_result.squeeze(axis=0),
-                output_stride=output_stride,
-                max_pose_detections=10,
-                min_pose_score=0.15)
-
-            keypoint_coords *= output_scale
-
-            # TODO this isn't particularly fast, use GL for drawing and display someday...
-            overlay_image = posenet.draw_skel_and_kp(
-                display_image, pose_scores, keypoint_scores, keypoint_coords,
-                min_pose_score=0.15, min_part_score=0.1)
-
-            cv2.imshow('posenet', overlay_image)
-            frame_count += 1
             # this saves the image file
-            cv2.imwrite(filename='saved_images/img' + str(frame_count) + '.jpg', img=cap.read()[1])
+            img = cap.read()[1]
+            cv2.imwrite(filename='saved_images/img' + str(frame_count) + '.jpg', img=img)
             
             with open('saved_images/img' + str(frame_count) + '.jpg', "rb") as f:
                 data = f.read()
@@ -72,6 +48,14 @@ def main():
             # not sure if this should be here, cuz lag...
             result = ws.recv()
             # print(result)
+            pts = a.split('\n\n')[0]
+            parsed_pts = ''.join(filter(whitelist.__contains__, pts))
+            lst = parsed_pts.split()
+            final_lst = [float(f) for f in lst]
+            keypoints = np.reshape(np.array(final_lst), (17, 2))
+            #out_img = cv2.drawKeypoints(
+	    #    img, cv_keypoints, outImage=np.array([]), color=(255, 255, 0),
+            #	flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
