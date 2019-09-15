@@ -31,6 +31,8 @@ def main():
 
         start = time.time()
         for f in filenames:
+            print("THE F IS", f)
+            exit()
             input_image, draw_image, output_scale = posenet.read_imgfile(
                 f, scale_factor=args.scale_factor, output_stride=output_stride)
 

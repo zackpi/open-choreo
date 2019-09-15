@@ -1,3 +1,7 @@
+## OUR THINGS
+
+ffmpeg -i danceRevolution.mp4 -vf fps=1 imaget/thumb%04d.jpg -hide_bannerner
+
 ## PoseNet Python
 
 This repository contains a pure Python implementation (multi-pose only) of the Google TensorFlow.js Posenet model. For a (slightly faster) PyTorch implementation that followed from this, see (https://github.com/rwightman/posenet-pytorch)
