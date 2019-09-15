@@ -1,4 +1,4 @@
-#!/home/yczeng/Documents/hackmit2019/open-choreo/posenet-python/bin/python
+#!/home/zackpi/Documents/Hobby/hackMIT/open-choreo/posenet-python/bin/python
 
 import sys
 import getopt

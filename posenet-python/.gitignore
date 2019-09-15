@@ -36,6 +36,9 @@ share/python-wheels/
 keypoints/
 pip-selfcheck.json
 MANIFEST
+bin/
+pip-selfcheck.json
+include/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
