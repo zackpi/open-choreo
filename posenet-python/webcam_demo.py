@@ -27,6 +27,10 @@ def main():
         cap.set(3, args.cam_width)
         cap.set(4, args.cam_height)
 
+        print(cap)
+
+        # cv2.imwrite(filename='saved_images/saved_img.jpg', img=cap.read()[1])
+
         start = time.time()
         frame_count = 0
         while True:
@@ -56,6 +60,7 @@ def main():
 
             cv2.imshow('posenet', overlay_image)
             frame_count += 1
+            cv2.imwrite(filename='saved_images/img' + str(frame_count) + '.jpg', img=cap.read()[1])
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
