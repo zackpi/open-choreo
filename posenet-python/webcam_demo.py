@@ -5,6 +5,7 @@ import argparse
 from websocket import *
 import posenet
 import base64
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=int, default=101)
@@ -48,17 +49,21 @@ def main():
             # not sure if this should be here, cuz lag...
             result = ws.recv()
             # print(result)
-            pts = a.split('\n\n')[0]
+            pts = result.split('\n\n')[0]
             parsed_pts = ''.join(filter(whitelist.__contains__, pts))
             lst = parsed_pts.split()
             final_lst = [float(f) for f in lst]
             keypoints = np.reshape(np.array(final_lst), (17, 2))
+            #cv_keypoints = []
+            #for kc in keypoints:
+            #    cv_keypoints.append(cv2.KeyPoint(kc[1], kc[0], 5. ))
             #out_img = cv2.drawKeypoints(
 	    #    img, cv_keypoints, outImage=np.array([]), color=(255, 255, 0),
             #	flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            #cv2.imshow("out", out_img)
+            #cv2.waitKey(25)
+            #if cv2.waitKey(1) & 0xFF == ord('q'):
+            #    break
 
         print('Average FPS: ', frame_count / (time.time() - start))
         ws.close()
