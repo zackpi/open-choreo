@@ -34,8 +34,9 @@ def client_left(client, server):
 # Called when a client sends a message
 def message_received(client, server, message):
 	print("Client(%d) said: %s" % (client['id'], message))
-        png_recovered = base64.b64decode(data)
-    
+        png_recovered = base64.decodebytes(message)
+        img = np.frombuffer(png_recovered, dtype=np.float64)
+
         # img is what you decode, a numpy array
         input_image, draw_image, output_scale = posenet._process_input(img, scale_factor, output_stride)
         heatmaps_result, offsets_result, displacement_fwd_result, displacement_bwd_result = sess.run(model_outputs,feed_dict={'image:0': input_image})
