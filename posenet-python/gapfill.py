@@ -5,7 +5,7 @@ import argparse
 import os
 
 import posenet
-
+import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=int, default=101)
@@ -13,6 +13,7 @@ parser.add_argument('--scale_factor', type=float, default=1.0)
 parser.add_argument('--notxt', action='store_true')
 parser.add_argument('--image_dir', type=str, default='./images')
 parser.add_argument('--output_dir', type=str, default='./output')
+parser.add_argument('--json_dir', type=str, default='./keypoints')
 args = parser.parse_args()
 
 
@@ -70,6 +71,10 @@ def main():
             if not os.path.exists(args.output_dir):
                 os.makedirs(args.output_dir)
 
+        if args.json_dir:
+            if not os.path.exists(args.json_dir):
+                os.makedirs(args.json_dir)
+
         filenames = sorted([
             f.path for f in os.scandir(args.image_dir) if f.is_file() and f.path.endswith(('.png', '.jpg'))])
 
@@ -103,10 +108,11 @@ def main():
                 draw_image = posenet.draw_skel_and_kp(
                     draw_image, pose_scores, keypoint_scores, keypoint_coords,
                     min_pose_score=0.25, min_part_score=0)
-                cv2.imshow("out", draw_image)
-                cv2.waitKey(1)
+#                cv2.imshow("out", draw_image)
+#                cv2.waitKey(1)
                 cv2.imwrite(os.path.join(args.output_dir, os.path.relpath(f, args.image_dir)), draw_image)
 
+            data = dict()
             if not args.notxt:
                 print()
                 print("Results for image: %s" % f)
@@ -114,8 +120,17 @@ def main():
                     if pose_scores[pi] == 0.:
                         break
                     print('Pose #%d, score = %f' % (pi, pose_scores[pi]))
+                    data['Pose%d' % pi] = dict()
+                    data['Pose%d' % pi]['score'] = pose_scores[pi]
                     for ki, (s, c) in enumerate(zip(keypoint_scores[pi, :], keypoint_coords[pi, :, :])):
                         print('Keypoint %s, score = %f, coord = %s' % (posenet.PART_NAMES[ki], s, c))
+                        data['Pose%d' % pi][posenet.PART_NAMES[ki]] = dict()
+                        data['Pose%d' % pi][posenet.PART_NAMES[ki]]['score'] = s
+                        data['Pose%d' % pi][posenet.PART_NAMES[ki]]['x'] = c[0]
+                        data['Pose%d' % pi][posenet.PART_NAMES[ki]]['y'] = c[1]
+
+            with open(os.path.join(args.json_dir, os.path.relpath(f, args.image_dir).split('.')[0]+'.json'), 'w') as fp:
+                json.dump(data, fp)
 
         print('Average FPS:', len(filenames) / (time.time() - start))
 
